@@ -32,6 +32,9 @@ Todo:
     subject directory)
 
     - all variables in camelcase, all functions with capital first letter
+    
+    - print # of current subject with total # of subjects next to it
+      (i.e. Running subject 10 of 100)
 
 v1 3/5/12:
     implemented the rough stuff
