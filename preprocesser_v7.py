@@ -59,8 +59,10 @@ v7 3/29/12:
 """
 
 
-def Loader(path, source):
-    #takes in the source and the path to the source
+def Loader(path, source=''):
+    # takes in the path to the source and the source(filename) if specified
+    # if no source is specified, this assumes that it is parsed directly
+    # with the path
     img = nib.load(os.path.join(path, source))
     data = img.get_data().astype('float64')
 
@@ -192,9 +194,13 @@ def Main(batchFile, configFile, sysPath, saveOut=0):
     print '\nWelcome to the nifti Processer! '
 
     conf = open(os.path.join(sysPath, configFile)).readline().strip().split()
-    (mPath, mname, funcAbsPath, funcRelPath, funcName, outPath) = conf
+    (mPath,
+     funcAbsPath,
+     funcName,
+     funcRelPath,
+     outPath) = conf
 
-    (mRaw, maskData) = Loader(mPath, mname)
+    (mRaw, maskData) = Loader(mPath)
     batch = open(os.path.join(sysPath, batchFile))
     ages = np.array([], dtype='float32')
     argList = []
@@ -255,6 +261,7 @@ def Main(batchFile, configFile, sysPath, saveOut=0):
 
     # Return the values if this was called from another module
     return (feature, ages)
+
 
 # Boilerplate to call main():
 if __name__ == '__main__':

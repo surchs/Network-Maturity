@@ -75,10 +75,17 @@ def ParamEst(feature, labels, trainData, trainLabel):
     return bestC
 
 
-def TrainModel(trainData, trainLabel, bestC):
+def TrainModel(trainData, trainLabel, bestC, savemodel=0):
     # Modelparameters from Estimation
     trainModel = svm.SVR(C=bestC)
     trainModel.fit(trainData, trainLabel)
+
+    # This is not used by default because I haven't figured out how to save
+    # this to a useful path without pushing the path all the way through
+    # the script. Instead this model is returned to the wrapper and saved
+    # there.
+    if savemodel == 1:
+        np.save('trainmodel.npy', trainModel)
 
     return trainModel
 
@@ -116,3 +123,30 @@ def TestModel(trainModel, testData, testLabel, cv=1, bestC=1):
         predKeep = trainModel.predict(testLabel)
 
     return (trueKeep, predKeep)
+
+
+def Processer(feature, labels):
+    # This is an internal wrapper function to make calling the functions
+    # inside this module less of a hassle
+
+    (trainData,
+     trainLabel,
+     testData,
+     testLabel) = DataSplit(feature, labels)
+
+    bestC = ParamEst(feature,
+                     labels,
+                     trainData,
+                     trainLabel)
+
+    trainModel = TrainModel(trainData,
+                            trainLabel,
+                            bestC)
+
+    (trueKeep, predKeep) = TestModel(trainModel,
+                                     testData,
+                                     testLabel,
+                                     cv=1,
+                                     bestC=bestC)
+
+    return (trueKeep, predKeep, trainModel)

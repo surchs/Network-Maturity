@@ -18,6 +18,7 @@ configFile = sys.argv[2]
 
 print 'Welcome to wrapper '
 print 'All variables have been read in '
+print 'The Syspath is', sysPath
 print 'Let\'s go '
 
 print '\nStarting the Preprocessing '
