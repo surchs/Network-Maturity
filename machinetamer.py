@@ -23,6 +23,8 @@ Here is a list of things that the module is supposed to do:
 
 v1 3/21/12:
     - first implementation
+v2 3/30/12:
+    - modularized
 """
 
 import numpy as np
@@ -31,35 +33,86 @@ from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
 
 
-def svmer(feature, labels):
+def DataSplit(feature, labels):
+    # first split the data into train and test
+    index, mirrorIndex = KFold(feature.shape[0], 2)
+    trainData = feature[index[0]]
+    testData = feature[index[1]]
+    trainLabel = labels[index[0]]
+    testLabel = labels[index[1]]
 
-    kFoldIndex = KFold(len(labels), 2)
-    trainIndex, testIndex = kFoldIndex
-    trainSet1 = feature[trainIndex[0]]
-    trainSet2 = feature[trainIndex[1]]
-    testSet1 = labels[trainIndex[0]]
-    testSet2 = labels[trainIndex[1]]
+    return (trainData, trainLabel, testData, testLabel)
 
-    parameters = {'C': np.arange(180, 240, 0.1)}
+
+def ParamEst(feature, labels, trainData, trainLabel):
+    # provide the parameters for the first, coarse pass
+    parameters = {'C': np.arange(1, 1000, 2)}
     gridModel = svm.SVR()
 
-    trainModel = grid_search.GridSearchCV(gridModel, parameters, cv=10, n_jobs=8)
-    trainModel.fit(trainSet1, testSet1)
-    bestC = trainModel.best_estimator_.C
+    print 'First pass parameter estimation! '
+    firstTrainModel = grid_search.GridSearchCV(gridModel,
+                                          parameters,
+                                          cv=10,
+                                          n_jobs=-1,
+                                          verbose=1,
+                                          pre_dispatch=8)
+    firstTrainModel.fit(trainData, trainLabel)
+    firstPassC = firstTrainModel.best_estimator_.C
+    print 'The Firstpass C parameter is:', firstPassC
 
-    loo = LeaveOneOut(len(testSet2))
-    testmodel = svm.SVR(C=bestC)
+    # reuse estimated parameters for second, better pass
+    print '\nSecond pass parameter estimation! '
+    parameters = {'C': np.arange(firstPassC - 30, firstPassC + 30, 0.1)}
+    secondTrainModel = grid_search.GridSearchCV(gridModel,
+                                                parameters,
+                                                cv=10,
+                                                n_jobs=-1,
+                                                verbose=1,
+                                                pre_dispatch=8)
+    bestC = secondTrainModel.best_estimator_.C
+    print 'Overall best C parameter is:', bestC
 
-    trueKeep = np.array([])
-    predKeep = np.array([])
+    return bestC
 
-    for train, test in loo:
-        testmodel.fit(trainSet2[train], testSet2[train])
-        print 'Predicted:', testmodel.predict(trainSet2[test]), 'true', testSet2[test]
-        diff = testmodel.predict(trainSet2[test]) - testSet2[test]
-        print 'Difference is', diff
 
-        trueKeep = np.append(trueKeep, testSet2[test])
-        predKeep = np.append(predKeep, testmodel.predict(trainSet2[test]))
+def TrainModel(trainData, trainLabel, bestC):
+    # Modelparameters from Estimation
+    trainModel = svm.SVR(C=bestC)
+    trainModel.fit(trainData, trainLabel)
+
+    return trainModel
+
+
+def TestModel(trainModel, testData, testLabel, cv=1, bestC=1):
+    # got the model from TrainModel
+
+    if cv == 1:
+        # do crossvalidation
+        testmodel = svm.SVR(C=bestC)
+
+        # split the dataset for crossvalidation
+        loo = LeaveOneOut(len(testLabel))
+
+        trueKeep = np.array([])
+        predKeep = np.array([])
+
+        for train, pred in loo:
+            testmodel.fit(testData[train], testLabel[train])
+
+            print ('Predicted:',
+                   testmodel.predict(testData[pred]),
+                   'true',
+                   testLabel[pred])
+
+            diff = testmodel.predict(testData[pred]) - testLabel[pred]
+            print 'Difference is', diff
+
+            trueKeep = np.append(trueKeep, testLabel[pred])
+            predKeep = np.append(predKeep, testmodel.predict(testData[pred]))
+
+    else:
+        # don't crossvalidate, just predict
+        trueKeep = testLabel
+        predKeep = trainModel.predict(testLabel)
 
     return (trueKeep, predKeep)
