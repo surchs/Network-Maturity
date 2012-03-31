@@ -54,9 +54,9 @@ def ParamEst(feature, labels, trainData, trainLabel):
     firstTrainModel = grid_search.GridSearchCV(gridModel,
                                                parameters,
                                                cv=10,
-                                               n_jobs=-1,
+                                               n_jobs=8,
                                                verbose=1,
-                                               pre_dispatch=8)
+                                               pre_dispatch=0)
     firstTrainModel.fit(trainData, trainLabel)
     firstPassC = firstTrainModel.best_estimator_.C
     print 'The Firstpass C parameter is:', firstPassC
@@ -67,9 +67,9 @@ def ParamEst(feature, labels, trainData, trainLabel):
     secondTrainModel = grid_search.GridSearchCV(gridModel,
                                                 parameters,
                                                 cv=10,
-                                                n_jobs=-1,
+                                                n_jobs=8,
                                                 verbose=1,
-                                                pre_dispatch=8)
+                                                pre_dispatch=0)
     secondTrainModel.fit(trainData, trainLabel)
     bestC = secondTrainModel.best_estimator_.C
     print 'Overall best C parameter is:', bestC
