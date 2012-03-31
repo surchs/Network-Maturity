@@ -47,10 +47,10 @@ def DataSplit(feature, labels):
 def ParamEst(feature, labels, trainData, trainLabel):
     # provide the parameters for the first, coarse pass
     parameters = {'C': np.arange(1, 1000, 2)}
-    gridModel = svm.SVR()
+    firstGridModel = svm.SVR()
 
     print 'First pass parameter estimation! '
-    firstTrainModel = grid_search.GridSearchCV(gridModel,
+    firstTrainModel = grid_search.GridSearchCV(firstGridModel,
                                           parameters,
                                           cv=10,
                                           n_jobs=-1,
@@ -62,8 +62,9 @@ def ParamEst(feature, labels, trainData, trainLabel):
 
     # reuse estimated parameters for second, better pass
     print '\nSecond pass parameter estimation! '
+    secondGridModel = svm.SVR()
     parameters = {'C': np.arange(firstPassC - 30, firstPassC + 30, 0.1)}
-    secondTrainModel = grid_search.GridSearchCV(gridModel,
+    secondTrainModel = grid_search.GridSearchCV(secondGridModel,
                                                 parameters,
                                                 cv=10,
                                                 n_jobs=-1,

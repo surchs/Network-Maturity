@@ -9,8 +9,8 @@ wrapper script
 
 import os
 import sys
-from . import preprocesser_v7 as pp
-from . import machinetamer as mt
+import preprocesser_v7 as pp
+import machinetamer as mt
 
 sysPath = os.path.abspath(os.curdir)
 batchFile = sys.argv[1]

@@ -190,7 +190,7 @@ def Processer(arguments):
     return featVec
 
 
-def Main(batchFile, configFile, sysPath, saveOut=0):
+def Main(batchFile, configFile, sysPath, saveOut=1):
     print '\nWelcome to the nifti Processer! '
 
     conf = open(os.path.join(sysPath, configFile)).readline().strip().split()
@@ -243,7 +243,7 @@ def Main(batchFile, configFile, sysPath, saveOut=0):
     print 'Ages shape', ages.shape
 
     if saveOut != 0:
-        print '\########## '
+        print '\n########## '
         print 'Saving data to files '
         TexSaver(feature,
                  outPath,
@@ -256,7 +256,7 @@ def Main(batchFile, configFile, sysPath, saveOut=0):
         print '\nDone saving! '
         print '########## '
     else:
-        print '\########## '
+        print '\n########## '
         print 'Nothing will be saved because \'saveout\' has not been set. '
         print '########## '
 
