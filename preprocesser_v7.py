@@ -195,12 +195,13 @@ def Main(batchFile, configFile, sysPath, saveOut=0):
 
     conf = open(os.path.join(sysPath, configFile)).readline().strip().split()
     (mPath,
+     mSource,
      funcAbsPath,
      funcName,
      funcRelPath,
      outPath) = conf
 
-    (mRaw, maskData) = Loader(mPath)
+    (mRaw, maskData) = Loader(mPath, source=mSource)
     batch = open(os.path.join(sysPath, batchFile))
     ages = np.array([], dtype='float32')
     argList = []
