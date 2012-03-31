@@ -242,7 +242,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     print 'Feature shape', feature.shape
     print 'Ages shape', ages.shape
 
-    if saveOut != 0:
+    if saveOut == 1:
         print '\n########## '
         print 'Saving data to files '
         TexSaver(feature,
