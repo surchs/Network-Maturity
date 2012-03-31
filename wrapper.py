@@ -25,7 +25,7 @@ print '\nStarting the Preprocessing '
 (feature, ages) = pp.Main(batchFile,
                           configFile,
                           sysPath,
-                          saveOut=0)
+                          saveOut=1)
 
 print '\nStarting SVM '
 (trueKeep, predKeep, trainModel) = mt.Processer(feature,
