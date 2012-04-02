@@ -46,7 +46,7 @@ def DataSplit(feature, labels):
 
 def ParamEst(feature, labels, trainData, trainLabel):
     # provide the parameters for the first, coarse pass
-    parameters = {'C': np.arange(1, 1000, 2)}
+    parameters = {'C': np.arange(1, 1000, 2).tolist()}
     print 'Parameters', parameters['C']
     gridModel = svm.SVR()
 
@@ -55,8 +55,7 @@ def ParamEst(feature, labels, trainData, trainLabel):
                                                parameters,
                                                cv=10,
                                                n_jobs=8,
-                                               verbose=1,
-                                               pre_dispatch=0)
+                                               verbose=2)
     firstTrainModel.fit(trainData, trainLabel)
     firstPassC = firstTrainModel.best_estimator_.C
     print 'The Firstpass C parameter is:', firstPassC
@@ -68,8 +67,7 @@ def ParamEst(feature, labels, trainData, trainLabel):
                                                 parameters,
                                                 cv=10,
                                                 n_jobs=8,
-                                                verbose=1,
-                                                pre_dispatch=0)
+                                                verbose=2)
     secondTrainModel.fit(trainData, trainLabel)
     bestC = secondTrainModel.best_estimator_.C
     print 'Overall best C parameter is:', bestC

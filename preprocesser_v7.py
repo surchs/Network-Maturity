@@ -174,7 +174,9 @@ def Processer(arguments):
     feature = np.array([], dtype='float32')
     averageArray = np.array([], dtype='float32')
 
-    for num in range(1, int(maskData.max() + 1)):
+    # for every unique mask value (because we can't assume that the values are
+    # are continues from 1 to max_value(mask))
+    for num in np.unique(maskData):
         # average the mask that was just run
         (outMask, smallMask) = Masker(funcData, maskData, num)
         (avgerage, averageArray) = Averager(smallMask,
@@ -202,6 +204,23 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
      outPath) = conf
 
     (mRaw, maskData) = Loader(mPath, source=mSource)
+
+    # check if the values in the mask are actually continuous from 1 to
+    # max_value(mask)
+    maskUnique = np.unique(maskData)
+    matchCheck = np.in1d(maskUnique, range(1, int(maskData.max() + 1)))
+    # if there is any value that is missing
+    if matchCheck.any(False):
+        missing = (matchCheck == False)
+        print '\n##### ATTENTION #####'
+        print 'Your mask is not continuous!'
+        print 'This means that the values in your mask are not continuous from'
+        print '1 to the maximum value'
+        print 'these values are missing:', maskUnique[missing]
+        print '\nIf you expected this, all is fine.'
+        print 'If not, you should consider checking your mask'
+        print '##### ATTENTION #####\n'
+
     batch = open(os.path.join(sysPath, batchFile))
     ages = np.array([], dtype='float32')
     argList = []
@@ -248,11 +267,11 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         TexSaver(feature,
                  outPath,
                  prefix='feature',
-                 suffix=str(maskData.max()))
+                 suffix=str(int(maskData.max())))
         TexSaver(ages,
                  outPath,
                  prefix='ages',
-                 suffix=str(maskData.max()))
+                 suffix=str(int(maskData.max())))
         print '\nDone saving! '
         print '########## '
     else:
