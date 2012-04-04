@@ -56,6 +56,9 @@ v6 3/19/12:
     implement parallelization, cleaned up code
 v7 3/29/12:
     imporve modularization by removing the main() function
+v8 4/4/12:
+    manipulate for spectral clustering - first try
+    also changing the saving procedure
 """
 
 
@@ -139,6 +142,7 @@ def Correlater(averageArray, feature=np.array([], dtype='float32')):
     matMask = np.tril(matMask, -1)
     featVec = corr[matMask != 0]
 
+    # append the feature matrix
     if feature.size == 0:
         feature = featVec[np.newaxis, ...]
     else:
@@ -194,7 +198,7 @@ def Processer(arguments):
     (corr, featVec, feature) = Correlater(averageArray)
 
     print 'Done with Subject', sub, 'now '
-    return featVec
+    return (featVec, corr)
 
 
 def Main(batchFile, configFile, sysPath, saveOut=1):
@@ -232,8 +236,15 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     argList = []
     texOut = 0
 
+    # prepare storage variables
+    subjectOrder = []
+    # these to put the output of multiple processes into
+    feature = np.array([], dtype='float32')
+    corrStore = np.array([], dtype='float32')
+
     for line in batch:
         (sub, ages) = BatchReader(line, ages)
+        subjectOrder.append(sub)
         arguments = (sub,
                      funcAbsPath,
                      funcRelPath,
@@ -249,20 +260,32 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     print len(resultList)
     print 'Sub1 reslist:', resultList[1].shape
 
-    feature = np.array([], dtype='float32')
-
     TexSaver(resultList,
              outPath,
              prefix='reslist',
              suffix='newall')
 
+    # collect the outputs of the different processes and put them
+    # into stacked variables
     for item in range(len(resultList)):
+        # expand the outputs in reslist into variables again
+        (featVec, corr) = resultList[item]
+
+        # for the feature vectors
         if feature.size == 0:
-            add = resultList[0]
-            feature = add[np.newaxis, ...]
+            feature = featVec[np.newaxis, ...]
         else:
-            add = resultList[item]
-            feature = np.concatenate((feature, add[np.newaxis, ...]), axis=0)
+            feature = np.concatenate((feature,
+                                      featVec[np.newaxis, ...]),
+                                      axis=0)
+
+        # for the correlation matrices
+        if corrStore.size == 0:
+            corrStore = corr[np.newaxis, ...]
+        else:
+            corrStore = np.concatenate((corrStore, corr[np.newaxis, ...]),
+                                       axis=0)
+
 
     print 'Feature shape', feature.shape
     print 'Ages shape', ages.shape
@@ -270,6 +293,14 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     if saveOut == 1:
         print '\n########## '
         print 'Saving data to files '
+        # new archive saving method
+        np.savez((outPath + 'pp_storage_' + str(int(maskData.max()))),
+                 feature=feature,
+                 age=ages,
+                 correlation=corrStore,
+                 subjects=subjectOrder)
+
+        # old separate file saving method
         TexSaver(feature,
                  outPath,
                  prefix='feature',
@@ -286,7 +317,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         print '########## '
 
     # Return the values if this was called from another module
-    return (feature, ages)
+    return (feature, ages, corrStore)
 
 
 # Boilerplate to call main():
