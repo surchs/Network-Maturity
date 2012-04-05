@@ -9,9 +9,9 @@ Created on Thu Mar 29 17:08:02 2012
 
 # first of all, get the imports done
 import os
+import sys
 import numpy as np
 import nibabel as nib
-import sys
 from multiprocessing import Pool
 
 
@@ -258,7 +258,6 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     resultList = pool.map(Processer, argList)
     print type(resultList)
     print len(resultList)
-    print 'Sub1 reslist:', resultList[1].shape
 
     TexSaver(resultList,
              outPath,
@@ -286,7 +285,6 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
             corrStore = np.concatenate((corrStore, corr[np.newaxis, ...]),
                                        axis=0)
 
-
     print 'Feature shape', feature.shape
     print 'Ages shape', ages.shape
 
@@ -294,11 +292,14 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         print '\n########## '
         print 'Saving data to files '
         # new archive saving method
-        np.savez((outPath + 'pp_storage_' + str(int(maskData.max()))),
+        prefix = 'pp_storage'
+        suffix = str(int(maskData.max()))
+        filename = prefix + '_', suffix
+        fullname = outPath + '/' + filename
+        np.savez(fullname,
                  feature=feature,
                  age=ages,
-                 correlation=corrStore,
-                 subjects=subjectOrder)
+                 correlation=corrStore)
 
         # old separate file saving method
         TexSaver(feature,
