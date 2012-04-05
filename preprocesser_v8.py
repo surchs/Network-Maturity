@@ -174,7 +174,8 @@ def Processer(arguments):
      texOut) = arguments
 
     # load the functional file
-    (funcSet, funcData) = Loader(os.path.join(funcAbsPath, sub), funcName)
+    (funcSet, funcData) = Loader(os.path.join(funcAbsPath, sub),
+                                 source=funcName)
     feature = np.array([], dtype='float32')
     averageArray = np.array([], dtype='float32')
 
@@ -292,10 +293,11 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         print '\n########## '
         print 'Saving data to files '
         # new archive saving method
-        prefix = 'pp_storage'
+        prefix = 'pp_test'
         suffix = str(int(maskData.max()))
         filename = prefix + '_', suffix
-        fullname = outPath + '/' + filename
+        fullname = os.path.join(outPath, filename)
+        print 'type fullname', type(fullname), fullname
         np.savez(fullname,
                  feature=feature,
                  age=ages,
