@@ -236,6 +236,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     ages = np.array([], dtype='float32')
     argList = []
     texOut = 0
+    numberProcesses = 8
 
     # prepare storage variables
     subjectOrder = []
@@ -255,7 +256,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
                      texOut)
         argList.append(arguments)
 
-    pool = Pool(processes=8)
+    pool = Pool(processes=numberProcesses)
     resultList = pool.map(Processer, argList)
     print type(resultList)
     print len(resultList)

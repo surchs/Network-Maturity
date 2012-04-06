@@ -12,6 +12,7 @@ import os
 import sys
 import numpy as np
 import nibabel as nib
+from multiprocessing import Pool
 from sklearn.cluster import spectral_clustering as sc
 
 
@@ -110,6 +111,14 @@ def MaskGenerater(identVec, maskData):
         fullMask = np.concatenate((fullMask, localMask[..., np.newaxis]),
                                   axis=3)
 
+    # the masks still contain float values so I have to round them and convert
+    # them to integer values
+    networkMask = np.around(networkMask)
+    networkMask.dtype = 'int'
+
+    fullMask = np.around(fullMask)
+    fullMask.dtype = 'int'
+
     return (networkMask, fullMask)
 
 
@@ -118,25 +127,66 @@ def Processer(arguments):
     (maskData,
      funcAbsPath,
      funcName,
-     subList,
+     sub,
      clustSol) = arguments
 
     # nodes are the unique values in the mask (without 0)
     nodes = np.unique(maskData)[1:]
-    print 'nodes:', nodes
+
+    # print 'Running', sub
+    # load the functional file for the current subject
+    (funcImg, funcData) = Loader(os.path.join(funcAbsPath, sub),
+                                 source=funcName)
+    print 'funcImg.shape', funcImg.shape
+
+    # returns a matrix of nodes by timepoints averaged node voxels
+    nodeStack = Averager(funcData, maskData, nodes)
+    # then stack this into a matrix of subjects by nodes by timepoints
+    # for first loop
+
+    return nodeStack
+
+
+def Main(batchFile, configFile, sysPath):
+    # open batchfile containing the subject names
+    batch = open(os.path.join(sysPath, batchFile))
+    conf = open(os.path.join(sysPath, configFile)).readline().strip().split()
+    (mPath,
+     mSource,
+     funcAbsPath,
+     funcName,
+     funcRelPath,
+     outPath) = conf
+
+    maskImage, maskData = Loader(mPath, source=mSource)
+
+    argList = []
+    clustSol = 7
+    numberProcesses = 8
+    numberNodes = maskData.max()
     subStack = np.array([], dtype='float32')
 
-    for sub in subList:
-        # print 'Running', sub
-        # load the functional file for the current subject
-        (funcImg, funcData) = Loader(os.path.join(funcAbsPath, sub),
-                                     source=funcName)
-        print 'funcImg.shape', funcImg.shape
+    # read the batchfile line by line and create the argumentlist for
+    # parallel processing
+    for line in batch:
+        subConf = line.strip().split()
+        sub = subConf[0]
+        arguments = (maskData,
+                     funcAbsPath,
+                     funcName,
+                     sub,
+                     clustSol)
 
-        # returns a matrix of nodes by timepoints averaged node voxels
-        nodeStack = Averager(funcData, maskData, nodes)
-        # then stack this into a matrix of subjects by nodes by timepoints
-        # for first loop
+        argList.append(arguments)
+
+    # run parallel processes
+    pool = Pool(processes=numberProcesses)
+    resultList = pool.map(Processer, argList)
+
+    for result in range(len(resultList)):
+        nodeStack = resultList[result]
+
+        # stack the results into the subStack
         if subStack.size == 0:
             subStack = nodeStack[np.newaxis, ...]
         # for every other loop
@@ -163,38 +213,7 @@ def Processer(arguments):
     print ('maskshapes. networkmask:', networkMask.shape,
            'fullmask:', fullMask.shape)
 
-    return (networkMask, fullMask)
-
-
-def Main(batchFile, configFile, sysPath):
-    # open batchfile containing the subject names
-    batch = open(os.path.join(sysPath, batchFile))
-    conf = open(os.path.join(sysPath, configFile)).readline().strip().split()
-    (mPath,
-     mSource,
-     funcAbsPath,
-     funcName,
-     funcRelPath,
-     outPath) = conf
-
-    maskImage, maskData = Loader(mPath, source=mSource)
-
-    subList = []
-    clustSol = 7
-    numberNodes = maskData.max()
-
-    # read the batchfile line by line
-    for line in batch:
-        subConf = line.strip().split()
-        subList.append(subConf[0])
-
-    arguments = (maskData,
-                 funcAbsPath,
-                 funcName,
-                 subList,
-                 clustSol)
-
-    (networkMask, fullMask) = Processer(arguments)
+    #### Saving the output ####
 
     header = maskImage.get_header()
     affine = maskImage.get_affine()
