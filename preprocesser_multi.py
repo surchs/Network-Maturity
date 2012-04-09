@@ -15,7 +15,6 @@ import numpy as np
 import nibabel as nib
 from multiprocessing import Pool
 
-
 """
 we need a Loader, a HeadGrabber, a Masker and an Averager (possibly this
 could also be done by the Masker)
@@ -274,7 +273,11 @@ def MaskWrapper(maskArguments, maskNo=0):
     return (feature, corrStore)
 
 
-def Main(batchFile, configFile, sysPath, saveOut=1):
+def Main(batchFile,
+         configFile,
+         sysPath,
+         callCommand='called from wrapper',
+         saveOut=1):
     print '\nWelcome to the nifti Processer! '
 
     # read from configfile
@@ -293,8 +296,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
     # for storing the looped variables, we are using dictionaries instead of
     # arrays as we cannot know the dimensions of the returned arrays before
     # and stacking arrays with different dimensions is uncool
-    featureDict = {}
-    correlationDict = {}
+    storageDict = {}
     numberProcesses = 8
 
     for line in batch:
@@ -335,8 +337,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
             (feature, corrStore) = MaskWrapper(maskArguments, maskNo=maskNo)
 
             # store the returned arrays into the dictionary
-            featureDict[('network ' + str(maskNo))] = feature
-            correlationDict[('network ' + str(maskNo))] = corrStore
+            storageDict[('network ' + str(maskNo))] = feature
 
     else:
         # we are using a standard 3D mask, no need for any loops
@@ -346,8 +347,25 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         print 'Have a nice day! '
         (feature, corrStore) = MaskWrapper(maskArguments)
 
-        featureDict['only network'] = feature
-        correlationDict['only network'] = corrStore
+        storageDict['only network'] = feature
+
+    # create strings to save out
+    commandString = ('This is the command string \n \n'
+                     'The following commands were executed '
+                     'to create this file:'
+                     '\nCommandline: '
+                     + callCommand
+                     + ' '
+                     + batchFile
+                     + ' '
+                     + configFile
+                     + '\nTimestamp: '
+                     + time.asctime())
+
+    # shove it all into one dictionary and then fetch it out later
+    storageDict['command'] = commandString
+    storageDict['subjects'] = subList
+    storageDict['labels'] = ages
 
     if saveOut == 1:
         print '\n########## '
@@ -356,12 +374,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         prefix = 'full_archive'
         filename = prefix
         fullname = os.path.join(outPath, filename)
-        np.savez(fullname,
-                 feature=featureDict,
-                 correlation=correlationDict,
-                 time=time.asctime(),
-                 batchfile=batchFile,
-                 syspath=sysPath)
+        np.savez(fullname, **storageDict)
         print '\nDone saving! '
         print '########## '
     else:
@@ -370,7 +383,7 @@ def Main(batchFile, configFile, sysPath, saveOut=1):
         print '########## '
 
     # Return the values if this was called from another module
-    return (feature, ages, corrStore)
+    return storageDict
 
 
 # Boilerplate to call main():
@@ -381,6 +394,7 @@ if __name__ == '__main__':
     # be cleaned up for modular use
 
     sysPath = os.path.abspath(os.curdir)
+    callCommand = sys.argv[0]
     batchFile = sys.argv[1]
     configFile = sys.argv[2]
-    Main(batchFile, configFile, sysPath)
+    Main(batchFile, configFile, sysPath, callCommand=callCommand)
