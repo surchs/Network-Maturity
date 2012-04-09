@@ -73,7 +73,7 @@ def ParamEst(feature, labels, trainData, trainLabel):
                                      0.1)}
     else:
         print 'The Firstpass C parameter is:', firstPassC
-        parameters = {'C': np.arange(firstPassC - 30, firstPassC + 30, 0.1)}
+        parameters = {'C': np.arange(firstPassC - 10, firstPassC + 10, 0.1)}
 
     # reuse estimated parameters for second, better pass
     print '\nSecond pass parameter estimation! '
