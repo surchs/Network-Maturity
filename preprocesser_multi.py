@@ -192,13 +192,15 @@ def SubjectProcesser(arguments):
     # (or in the order of argument list in multicore-mode) is called 'feature'
     (corr, featVec, feature) = Correlater(averageArray)
 
-    print 'Done with Subject', sub, 'now '
     return (featVec, corr)
 
 
 def MaskWrapper(maskArguments, maskNo=0):
     # check if the values in the mask are actually continuous from 1 to
     # max_value(mask)
+    global subCount
+    subCount = 1
+
     (subList,
      ageArray,
      funcAbsPath,
@@ -214,7 +216,7 @@ def MaskWrapper(maskArguments, maskNo=0):
         localMask_ = maskData
 
     maskUnique = np.unique(localMask_)
-    maskRange = np.arange(1, int(localMask_.max() + 1))
+    maskRange = np.arange(0, int(localMask_.max() + 1))
     matchCheck = np.in1d(maskUnique, maskRange)
 
     # if there is any value that is missing
@@ -223,7 +225,7 @@ def MaskWrapper(maskArguments, maskNo=0):
         print '\n##### ATTENTION #####'
         print 'Your mask is not continuous!'
         print 'This means that the values in your mask are not continuous from'
-        print '1 to the maximum value'
+        print '0 to the maximum value'
         print 'these values are missing:', maskUnique[missing]
         print '\nIf you expected this, all is fine.'
         print 'If not, you should consider checking your mask'
@@ -235,12 +237,13 @@ def MaskWrapper(maskArguments, maskNo=0):
 
     for sub in subList:
         subArguments = (sub,
-                     funcAbsPath,
-                     funcRelPath,
-                     funcName,
-                     localMask_)
+                        funcAbsPath,
+                        funcRelPath,
+                        funcName,
+                        localMask_)
         argList.append(subArguments)
 
+    print '\nRunning network', str(maskNo), 'now '
     print 'Starting Multicore Processing with', str(numberProcesses), 'cores.'
     start = time.time()
     pool = Pool(processes=numberProcesses)

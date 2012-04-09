@@ -30,7 +30,7 @@ storageDict = pp.Main(batchFile,
                       saveOut=1)
 print 'Done with Preprocessing '
 ppStop = time.time()
-ppElapsed = ppStart - ppStop
+ppElapsed = ppStop - ppStart
 print 'Took', ppElapsed, 'seconds to complete'
 
 print '\nStarting SVM '
@@ -39,5 +39,5 @@ machineDict = mt.Main(storageDict,
                       sysPath)
 print 'Done with SVM\n '
 mtStop = time.time()
-mtElapsed = ppStart - ppStop
+mtElapsed = ppStop - ppStart
 print 'Took', mtElapsed, 'seconds to complete'
