@@ -50,7 +50,7 @@ def DataSplit(feature, labels):
 def ParamEst(feature, labels, trainData, trainLabel):
     # provide the parameters for the first, coarse pass
     parameters = {'C': np.arange(1, 1000, 2).tolist()}
-    print 'Parameters', parameters['C']
+    # print 'Parameters', parameters['C']
     gridModel = svm.SVR()
 
     print 'First pass parameter estimation! '
@@ -58,19 +58,31 @@ def ParamEst(feature, labels, trainData, trainLabel):
                                                parameters,
                                                cv=10,
                                                n_jobs=8,
-                                               verbose=2)
+                                               verbose=1)
     firstTrainModel.fit(trainData, trainLabel)
     firstPassC = firstTrainModel.best_estimator_.C
-    print 'The Firstpass C parameter is:', firstPassC
+
+    if firstPassC < 32:
+        print 'The Firstpass C parameter is less than 30 '
+        print 'Because of the current implementation, this requires a '
+        print 'different way of parameter generation '
+        print 'This is just to let you know that this happened. '
+        print 'The Firstpass C parameter is', firstPassC, 'by the way'
+        parameters = {'C': np.arange(firstPassC - firstPassC / 2,
+                                     firstPassC + firstPassC / 2,
+                                     0.1)}
+    else:
+        print 'The Firstpass C parameter is:', firstPassC
+        parameters = {'C': np.arange(firstPassC - 30, firstPassC + 30, 0.1)}
 
     # reuse estimated parameters for second, better pass
     print '\nSecond pass parameter estimation! '
-    parameters = {'C': np.arange(firstPassC - 30, firstPassC + 30, 0.1)}
+
     secondTrainModel = grid_search.GridSearchCV(gridModel,
                                                 parameters,
                                                 cv=10,
                                                 n_jobs=8,
-                                                verbose=2)
+                                                verbose=1)
     secondTrainModel.fit(trainData, trainLabel)
     bestC = secondTrainModel.best_estimator_.C
     print 'Overall best C parameter is:', bestC
@@ -109,13 +121,13 @@ def TestModel(trainModel, testData, testLabel, cv=1, bestC=1):
         for train, pred in loo:
             testmodel.fit(testData[train], testLabel[train])
 
-            print ('Predicted:',
-                   testmodel.predict(testData[pred]),
-                   'true',
-                   testLabel[pred])
+            # print ('Predicted:',
+            #       testmodel.predict(testData[pred]),
+            #       'true',
+            #       testLabel[pred])
 
             diff = testmodel.predict(testData[pred]) - testLabel[pred]
-            print 'Difference is', diff
+            # print 'Difference is', diff
 
             trueKeep = np.append(trueKeep, testLabel[pred])
             predKeep = np.append(predKeep, testmodel.predict(testData[pred]))
@@ -164,7 +176,8 @@ def Main(archive, sysPath):
     subjects = archive['subjects']
 
     # next get all the networks inside the file
-    networkList = [key for key in archive.keys() if 'network' in key]
+    networkList = [key for key in archive.files if 'network' in key]
+    networkList.sort()
 
     # these two parameters could be dynamically assigned for greater usability
     saveOut = 1
@@ -183,7 +196,9 @@ def Main(archive, sysPath):
     for network in networkList:
         feature = archive[network]
         # store the output in the dictionary again
+        print '\n\nRunning network', str(network), 'now. '
         machineDict[network] = Processer(feature, labels)
+        print 'Network', str(network), 'done. '
 
     machineDict['time'] = time.asctime()
 

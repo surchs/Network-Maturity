@@ -220,7 +220,7 @@ def MaskWrapper(maskArguments, maskNo=0):
     matchCheck = np.in1d(maskUnique, maskRange)
 
     # if there is any value that is missing
-    if matchCheck.any(False):
+    if np.where(matchCheck == False)[0].size > 0:
         missing = (matchCheck == False)
         print '\n##### ATTENTION #####'
         print 'Your mask is not continuous!'
