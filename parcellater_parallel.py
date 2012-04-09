@@ -45,8 +45,6 @@ def Averager(functionalData, nodeMask, nodes):
                                         nodeAverage[np.newaxis, ...]),
                                        axis=0)
 
-    print 'nodeStack:', nodeStack.shape
-
     return nodeStack
 
 
@@ -114,10 +112,14 @@ def MaskGenerater(identVec, maskData):
     # the masks still contain float values so I have to round them and convert
     # them to integer values
     networkMask = np.around(networkMask)
-    networkMask.dtype = 'int'
+    print 'network max float', networkMask.max()
+    networkMask = networkMask.astype('int')
+    print 'network max rounded', networkMask.max()
 
     fullMask = np.around(fullMask)
-    fullMask.dtype = 'int'
+    print 'full max rounded', fullMask.max()
+    fullMask = fullMask.astype('int')
+    print 'full max integer', fullMask.max()
 
     return (networkMask, fullMask)
 
@@ -137,12 +139,13 @@ def Processer(arguments):
     # load the functional file for the current subject
     (funcImg, funcData) = Loader(os.path.join(funcAbsPath, sub),
                                  source=funcName)
-    print 'funcImg.shape', funcImg.shape
 
     # returns a matrix of nodes by timepoints averaged node voxels
     nodeStack = Averager(funcData, maskData, nodes)
     # then stack this into a matrix of subjects by nodes by timepoints
     # for first loop
+
+    print 'Done with subject', sub
 
     return nodeStack
 
@@ -224,7 +227,7 @@ def Main(batchFile, configFile, sysPath):
     nib.nifti1.save(netNif, (outPath
                              + '/'
                              + 'network_mask_'
-                             + str(numberNodes)
+                             + str(int(numberNodes))
                              + '_'
                              + str(clustSol)
                              + '_cluster'
@@ -233,7 +236,7 @@ def Main(batchFile, configFile, sysPath):
     nib.nifti1.save(fullNif, (outPath
                               + '/'
                               + 'full_mask_'
-                              + str(numberNodes)
+                              + str(int(numberNodes))
                               + '_'
                               + str(clustSol)
                               + '_cluster'
