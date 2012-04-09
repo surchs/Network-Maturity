@@ -126,7 +126,7 @@ def TestModel(trainModel, testData, testLabel, cv=1, bestC=1):
             #       'true',
             #       testLabel[pred])
 
-            diff = testmodel.predict(testData[pred]) - testLabel[pred]
+            # diff = testmodel.predict(testData[pred]) - testLabel[pred]
             # print 'Difference is', diff
 
             trueKeep = np.append(trueKeep, testLabel[pred])
@@ -195,10 +195,22 @@ def Main(archive, sysPath):
     # now we can loop over the networks
     for network in networkList:
         feature = archive[network]
-        # store the output in the dictionary again
-        print '\n\nRunning network', str(network), 'now. '
-        machineDict[network] = Processer(feature, labels)
-        print 'Network', str(network), 'done. '
+
+        # check if the mask contains more than one node (otherwise this makes
+        # pretty much no sense, right)
+        if feature.shape[1] > 1:
+            print '\n\nRunning network', str(network), 'now. '
+            # store the output in the dictionary again
+            machineDict[network] = Processer(feature, labels)
+            print 'Network', str(network), 'done. '
+        else:
+            print '\n\n#####  ATTENTION ##### '
+            print 'Network', str(network), 'containst only one node. '
+            print 'This makes no sense for this type of anlysis so  '
+            print 'network', str(network), 'will be skipped. '
+            print 'Please check your mask if you didn\'t expect this. '
+            print '#####  ATTENTION ##### '
+            time.sleep(2)
 
     machineDict['time'] = time.asctime()
 
