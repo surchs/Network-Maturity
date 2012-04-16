@@ -9,6 +9,7 @@ Created on Thu Mar 29 17:08:02 2012
 
 # first of all, get the imports done
 import os
+import re
 import sys
 import time
 import numpy as np
@@ -192,6 +193,8 @@ def SubjectProcesser(arguments):
     # (or in the order of argument list in multicore-mode) is called 'feature'
     (corr, featVec, feature) = Correlater(averageArray)
 
+    print 'Done with ', str(sub)
+
     return (featVec, corr)
 
 
@@ -280,7 +283,8 @@ def Main(batchFile,
          configFile,
          sysPath,
          callCommand='called from wrapper',
-         saveOut=1):
+         saveOut=1,
+         numberProcesses = 8):
     print '\nWelcome to the nifti Processer! '
 
     # read from configfile
@@ -300,7 +304,6 @@ def Main(batchFile,
     # arrays as we cannot know the dimensions of the returned arrays before
     # and stacking arrays with different dimensions is uncool
     storageDict = {}
-    numberProcesses = 8
 
     for line in batch:
         (sub, ages) = BatchReader(line, ages)
@@ -310,6 +313,9 @@ def Main(batchFile,
     # now subList and ageList contain information on the subjects
 
     (mRaw, maskData) = Loader(mPath, source=mSource)
+    numberNodes = int(maskData.max())
+    resolution = re.search(r'\dmm', mSource)
+    resolution = resolution.group()
 
     # regardless of iteration of loop, all processes get the
     # same base arguments
@@ -369,14 +375,20 @@ def Main(batchFile,
     storageDict['command'] = commandString
     storageDict['subjects'] = subList
     storageDict['labels'] = ages
+    storageDict['mask'] = mSource
+    storageDict['resolution'] = resolution
+
+    # prepare the filename
+    prefix = 'full_archive_'
+    suffix = str(numberNodes) + '_nodes_' + resolution
+    filename = prefix + suffix
+    fullname = os.path.join(outPath, filename)
 
     if saveOut == 1:
         print '\n########## '
         print 'Saving data to files '
         # new archive saving method
-        prefix = 'full_archive'
-        filename = prefix
-        fullname = os.path.join(outPath, filename)
+
         np.savez(fullname, **storageDict)
         print '\nDone saving! '
         print '########## '
@@ -400,4 +412,16 @@ if __name__ == '__main__':
     callCommand = sys.argv[0]
     batchFile = sys.argv[1]
     configFile = sys.argv[2]
-    Main(batchFile, configFile, sysPath, callCommand=callCommand)
+    if len(sys.argv) > 3:
+        numProc = int(sys.argv[4])
+        Main(batchFile,
+             configFile,
+             sysPath,
+             callCommand=callCommand,
+             numberProcesses=numProc)
+
+    else:
+        Main(batchFile,
+             configFile,
+             sysPath,
+             callCommand=callCommand)
