@@ -53,11 +53,12 @@ def Similarity(nodeMat):
     # of similarity matrix
     # for now, I use correlation with a threshold
 
-    similarityMat = np.corrcoef(nodeMat)
+    similarityMat_unthr = np.corrcoef(nodeMat)
     # set correlation values below threshold to 0
-    similarityMat[similarityMat < 0.5] = 0
+    similarityMat_thr = similarityMat_unthr
+    similarityMat_thr[similarityMat_thr < 0.1] = 0
 
-    return similarityMat
+    return (similarityMat_thr, similarityMat_unthr)
 
 
 def Cluster(similarityMat, clusterSolutions):
@@ -145,7 +146,7 @@ def Processer(arguments):
     # then stack this into a matrix of subjects by nodes by timepoints
     # for first loop
 
-    print 'Done with subject', sub
+    # print 'Done with subject', sub
 
     return nodeStack
 
@@ -203,12 +204,16 @@ def Main(batchFile, configFile, sysPath):
     avgStack = np.mean(subStack, axis=0)
     # returns a similarity matrix of nodes by nodes similarity values
     # here we are using correlation
-    similarityMat = Similarity(avgStack)
-    print 'similarity mat', similarityMat.shape
+    np.save((outPath + '/avgstack.npy'), avgStack)
+    similarityMat_thr, similarityMat_unthr = Similarity(avgStack)
+    print 'similarity mat', similarityMat_thr.shape
+
+    np.save((outPath + '/similarity_matrix_thr.npy'), similarityMat_thr)
+    np.save((outPath + '/similarity_matrix_unthr.npy'), similarityMat_unthr)
 
     # returns a vector of length=number nodes that contains the cluster number
     # for every element
-    identVec = Cluster(similarityMat, clustSol)
+    identVec = Cluster(similarityMat_thr, clustSol)
     print 'length identVector:', len(identVec)
 
     # returns a 3D networkmask and a 4D fullmask

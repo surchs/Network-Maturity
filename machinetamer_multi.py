@@ -36,18 +36,33 @@ from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
 
 
+def FeatureSelection(feature, labels):
+    # This implementation is highly suspicious.
+    # In other words, I still don't know what I am doing here
+    newFeature = svm.LinearSVC(penalty="l2").fit_transform(feature, labels)
+    featNo = feature.shape[1]
+    newFeatNo = newFeature.shape[1]
+
+    print 'The new number of features is:', newFeatNo
+    print 'this is down from:', featNo
+    time.sleep(3)
+    return (newFeature, featNo, newFeatNo)
+
+
 def DataSplit(feature, labels):
+    # first, reduce the number of features we are using
+    newFeature, featNo, newFeatNo = FeatureSelection(feature, labels)
     # first split the data into train and test
-    index, mirrorIndex = KFold(feature.shape[0], 2)
-    trainData = feature[index[0]]
-    testData = feature[index[1]]
+    index, mirrorIndex = KFold(newFeature.shape[0], 2)
+    trainData = newFeature[index[0]]
+    testData = newFeature[index[1]]
     trainLabel = labels[index[0]]
     testLabel = labels[index[1]]
 
-    return (trainData, trainLabel, testData, testLabel)
+    return (trainData, trainLabel, testData, testLabel, featNo, newFeatNo)
 
 
-def ParamEst(feature, labels, trainData, trainLabel):
+def ParamEst(trainData, trainLabel):
     # provide the parameters for the first, coarse pass
     parameters = {'C': np.arange(1, 1000, 2).tolist()}
     # print 'Parameters', parameters['C']
@@ -68,8 +83,8 @@ def ParamEst(feature, labels, trainData, trainLabel):
         print 'different way of parameter generation '
         print 'This is just to let you know that this happened. '
         print 'The Firstpass C parameter is', firstPassC, 'by the way'
-        parameters = {'C': np.arange(firstPassC - firstPassC / 2,
-                                     firstPassC + firstPassC / 2,
+        parameters = {'C': np.arange(firstPassC - float(firstPassC) / 2,
+                                     firstPassC + float(firstPassC) / 2,
                                      0.1)}
     else:
         print 'The Firstpass C parameter is:', firstPassC
@@ -86,6 +101,8 @@ def ParamEst(feature, labels, trainData, trainLabel):
     secondTrainModel.fit(trainData, trainLabel)
     bestC = secondTrainModel.best_estimator_.C
     print 'Overall best C parameter is:', bestC
+    performance = secondTrainModel.score(trainData, trainLabel)
+    print 'Training model score is:', performance
 
     return bestC
 
@@ -147,11 +164,11 @@ def Processer(feature, labels):
     (trainData,
      trainLabel,
      testData,
-     testLabel) = DataSplit(feature, labels)
+     testLabel,
+     featNo,
+     newFeatNo) = DataSplit(feature, labels)
 
-    bestC = ParamEst(feature,
-                     labels,
-                     trainData,
+    bestC = ParamEst(trainData,
                      trainLabel)
 
     trainModel = TrainModel(trainData,
@@ -164,7 +181,7 @@ def Processer(feature, labels):
                                      cv=1,
                                      bestC=bestC)
 
-    return (trueKeep, predKeep, trainModel)
+    return (trueKeep, predKeep, trainModel, featNo, newFeatNo)
 
 
 def Main(archive, sysPath):
@@ -181,16 +198,21 @@ def Main(archive, sysPath):
 
     # these two parameters could be dynamically assigned for greater usability
     saveOut = 1
-    outpath = os.path.join(sysPath, 'output')
+    outPath = os.path.join(sysPath, 'output')
+    resolution = archive['resolution']
+    print resolution
 
     machineDict = {}
     # enter kind of a docstring in the dictionary
-    machineDict['usage'] = ('The network eintries are tuples of length 3'
+    machineDict['usage'] = ('The network eintries are tuples of length 5'
                             '\nThey are used in the following fashion:'
-                            '   1) true labels for the test dataset '
-                            '   2) predicted labels for the test dataset '
-                            '   3) the saved model used for predicting ')
+                            '   0) true labels for the test dataset '
+                            '   1) predicted labels for the test dataset '
+                            '   2) the saved model used for predicting '
+                            '   3) number of original features '
+                            '   4) number of features after feature select. ')
     machineDict['subjects'] = subjects
+    machineDict['resolution'] = resolution
 
     # now we can loop over the networks
     for network in networkList:
@@ -213,9 +235,15 @@ def Main(archive, sysPath):
             time.sleep(2)
 
     machineDict['time'] = time.asctime()
+    numberNetworks = len(networkList)
+    filename = ('machine_'
+                + str(numberNetworks)
+                + '_networks_'
+                + str(resolution))
 
     if saveOut == 1:
-        np.savez(os.join.path(outpath, 'machine_file'), **machineDict)
+        outFile = os.path.join(outPath, filename)
+        np.savez(outFile, **machineDict)
 
     else:
         print 'Nothing saved here, parameters are simply returned.'
