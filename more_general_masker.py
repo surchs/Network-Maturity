@@ -26,18 +26,20 @@ debug = 0
 ran = 0
 print dataPath
 print ran
-for infile in glob.glob(os.path.join(dataPath, ('*/', fileName))):
+for infile in glob.glob(os.path.join(dataPath, '*/', fileName)):
 
     print 'current file is', infile
-    if debug != 0:
+    if debug != 1:
         func = nib.load(infile)
         funcData = func.get_data()
         cleanData = maskData[..., np.newaxis] * funcData
         funcOut = nib.Nifti1Image(cleanData,
                                   func.get_affine(),
                                   func.get_header())
-        outPath = re.sub(r'lfo_masked.nii.gz', outName, infile)
+        outPath = re.sub('lfo_\d*\w*masked.nii.gz', outName, infile)
         print 'the new output is:', outPath
         nib.nifti1.save(funcOut, outPath)
     else:
         print 'just debugging'
+        outPath = re.sub('lfo_\d*\w*masked.nii.gz', outName, infile)
+        print 'the new output is:', outPath
