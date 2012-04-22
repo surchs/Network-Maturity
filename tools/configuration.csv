@@ -1,0 +1,12 @@
+# mask/path/ maskName func/path/ func/rel/path/ funcName subjectList output/path/ nodeMode estimateParameters givenC givenE fileExtension
+# /home2/surchs/scripts/masks/ dosenbach_160_mni_3mm.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 0 1.00E+100 0.00001 dosenbach_160_3mm_fixed_parameters
+# /home2/surchs/scripts/masks/ dosenbach_160_mni_3mm.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 dosenbach_160_3mm_estimated_parameters
+# /home2/surchs/scripts/masks/ yeo_17_mni_4mm_liberal.nii.gz /home2/surchs/resampled func/rel/path/ lfo_4mm_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 0 1 1 1 yeo_17_4mm_voxelbased
+ /home2/surchs/scripts/masks/ yeo_17_mni_6mm_liberal.nii.gz /home2/surchs/resampled func/rel/path/ lfo_6mm_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 0 1 1 1 yeo_17_6mm_voxelbased
+# /home2/surchs/scripts/masks/ yeo_7_mni_4mm_liberal.nii.gz /home2/surchs/resampled func/rel/path/ lfo_4mm_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 0 1 1 1 yeo_17_4mm_voxelbased
+# /home2/surchs/scripts/masks/ yeo_7_mni_6mm_liberal.nii.gz /home2/surchs/resampled func/rel/path/ lfo_6mm_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 0 1 1 1 yeo_17_6mm_voxelbased
+# /home2/surchs/scripts/masks/ craddock_200_mni_3mm.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 craddock_200_3mm_alone
+# /home2/surchs/scripts/masks/ cam200_3mm_in_yeo7_liberal.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 craddock_200_3mm_yeo7_liberal
+# /home2/surchs/scripts/masks/ cam200_3mm_in_yeo17_liberal.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 craddock_200_3mm_yeo17_liberal
+# /home2/surchs/scripts/masks/ yeo_7_mni_3mm_liberal.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 yeo_7_3mm_alone
+# /home2/surchs/scripts/masks/ yeo_17_mni_3mm_liberal.nii.gz /home2/surchs/data/ func/rel/path/ lfo_masked.nii.gz batch2.txt /home2/surchs/scripts/output/ 1 1 1 1 yeo_17_3mm_alone

@@ -1,51 +1,146 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Mar 30 14:58:22 2012
+Created on Wed Apr 18 13:14:19 2012
 
 @author: sebastian
 
-wrapper script
+A wrapper to run all scripts
 """
-
-import os
+# get all the file imports
+import re
 import sys
-import preprocesser_v7 as pp
-import machinetamer as mt
+import time
+import preprocesser_wrap as pp
+import machinetamer_wrap as mt
 
-sysPath = os.path.abspath(os.curdir)
-batchFile = sys.argv[1]
-configFile = sys.argv[2]
 
-print 'Welcome to wrapper '
-print 'All variables have been read in '
-print 'The Syspath is', sysPath
-print 'Let\'s go '
+def Wrapper(maskPath,
+            maskName,
+            funcPath,
+            funcRelPath,
+            funcName,
+            subjectList,
+            outputPath,
+            nodeMode,
+            estParameters,
+            givenC,
+            givenE,
+            conditionName,
+            numberCores,
+            saveFiles=True):
+    # introduce ourselves
+    print '\n## '
+    print 'Running Wrapper for condition:', conditionName
+    print '##\n '
 
-print '\nStarting the Preprocessing '
-(feature, ages, corrStore) = pp.Main(batchFile,
-                              configFile,
-                              sysPath,
-                              saveOut=1)
+    # run the first step - preprocessing
+    preprocDict = pp.Main(maskPath,
+                          maskName,
+                          funcPath,
+                          funcRelPath,
+                          funcName,
+                          subjectList,
+                          outputPath,
+                          conditionName,
+                          numberCores,
+                          nodeMode)
 
-print '\nStarting SVM '
-(trueKeep, predKeep, trainModel) = mt.Processer(feature,
-                                                ages)
-print 'Done with SVM\n '
+    print 'waiting for 5 seconds to give the pools some time to cool down.'
+    time.sleep(5)
+    print 'done sleeping, let\'s roll '
 
-print 'Saving TrueKeep '
-pp.TexSaver(trueKeep,
-            (sysPath + '/output'),
-            prefix='trueVals',
-            suffix='temp')
+    # run second step - machine learning
+    if estParameters == 0:
+        machineDict = mt.Main(preprocDict,
+                              conditionName,
+                              outputPath,
+                              numberCores=numberCores,
+                              estParameters=estParameters,
+                              givenC=givenC,
+                              givenE=givenE)
 
-print 'Saving PredKeep '
-pp.TexSaver(predKeep,
-            (sysPath + '/output'),
-            prefix='predVals',
-            suffix='temp')
+    else:
+        machineDict = mt.Main(preprocDict,
+                              conditionName,
+                              outputPath,
+                              numberCores=numberCores)
 
-print 'Saving TrainModel '
-pp.TexSaver(trainModel,
-            (sysPath + '/output'),
-            prefix='trainModel',
-            suffix='temp')
+    return (preprocDict, machineDict)
+
+
+def Main(configFile, numberCores=8):
+    # introduction
+    print '\nWelcome to the Wrapper '
+    print 'today, we are running with', numberCores, 'cores for every process '
+    print 'have a nice day \n '
+
+    # save Files are set up globally
+    saveFiles = True
+    print 'Saving Files? =', saveFiles
+
+    # load the configfile
+    config = open(configFile)
+    # and read it into a list of strings
+    configLines = config.readlines()
+
+    # loop over the lines
+    for line in configLines:
+        # check if comment or empty
+        if '#' in line or re.match('^\n', line):
+            print '\nnot using this:', line.strip()
+        # check if right number of commands are parsed
+        elif len(line.strip().split()) != 12:
+            print '\nwrong number of commands '
+        else:
+            print '\nCommand OK! '
+            commandString = line.strip().split()
+            maskPath = commandString[0]
+            maskName = commandString[1]
+            funcPath = commandString[2]
+            funcRelPath = commandString[3]
+            funcName = commandString[4]
+            subjectList = commandString[5]
+            outputPath = commandString[6]
+            nodeMode = int(commandString[7])
+            estParameters = int(commandString[8])
+            givenC = float(commandString[9])
+            givenE = float(commandString[10])
+            conditionName = commandString[11]
+            print 'maskPath =', maskPath
+            print 'maskName =', maskName
+            print 'funcPath =', funcPath
+            print 'funcRelPath =', funcRelPath
+            print 'funcName =', funcName
+            print 'subjectList =', subjectList
+            print 'outputPath =', outputPath
+            print 'nodeMode? =', nodeMode
+            print 'estimate Parameters? =', estParameters
+            print 'given C =', givenC
+            print 'given E =', givenE
+            print 'fileExtenstion =', conditionName
+            Wrapper(maskPath,
+                    maskName,
+                    funcPath,
+                    funcRelPath,
+                    funcName,
+                    subjectList,
+                    outputPath,
+                    nodeMode,
+                    estParameters,
+                    givenC,
+                    givenE,
+                    conditionName,
+                    numberCores,
+                    saveFiles=saveFiles)
+
+    return
+
+# Boilerplate to call main():
+if __name__ == '__main__':
+    print 'Running in direct Call mode!'
+    configFile = sys.argv[1]
+    if len(sys.argv) > 2:
+        numberCores = int(sys.argv[2])
+        Main(configFile, numberCores)
+    else:
+        Main(configFile)
