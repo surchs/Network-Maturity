@@ -32,23 +32,71 @@ import sys
 import time
 import numpy as np
 from sklearn import svm, grid_search
+from sklearn.metrics import mean_square_error
 from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
+from sklearn.feature_selection import RFE, RFECV
 
 
 def FeatureSelection(feature, labels):
-    # This implementation is highly suspicious.
-    # In other words, I still don't know what I am doing here
-    newFeature = svm.LinearSVC(penalty="l2").fit_transform(feature, labels)
+    # Now this implementation is becoming less suspicious because I feel
+    # that I start to understand what I am doing here, at least for the
+    # linear kernel
+    #
+    # first: let's get the current number of features
     featNo = feature.shape[1]
+    # we also need an estimator object for scoring during RFE
+    svrEstimator = svm.SVR(kernel='linear')
+    # if there are too many features, we cannot run recursive feature
+    # elimination with performance measures. We first have to reduce the
+    # number of features the hard way
+    # here we set the threshold to 3000 - maybe too much...
+    if featNo > 1000:
+        rfeObject = RFE(estimator=svrEstimator,
+                        n_features_to_select=1000,
+                        step=2)
+
+        rfeObject.fit(feature, labels)
+        reducedFeatureIndex = rfeObject.support_
+        reducedFeatures = feature[reducedFeatureIndex]
+
+        rfecvObject = RFECV(estimator=svrEstimator,
+                            step=1,
+                            cv=5,
+                            loss_func=mean_square_error)
+
+        rfecvObject.fit(reducedFeatures, labels)
+        featureIndex = rfecvObject.support_
+        featureScore = rfecvObject.cv_scores_
+        featureStep = rfecvObject.step
+        newFeature = reducedFeatures[featureIndex]
+
+    else:
+        rfecvObject = RFECV(estimator=svrEstimator,
+                            step=1,
+                            cv=5,
+                            loss_func=mean_square_error)
+
+        rfecvObject.fit(feature, labels)
+        featureIndex = rfecvObject.support_
+        featureScore = rfecvObject.cv_scores_
+        featureStep = rfecvObject.step
+        newFeature = feature[featureIndex]
+
     newFeatNo = newFeature.shape[1]
 
-    return (newFeature, featNo, newFeatNo)
+    return (newFeature, featNo, newFeatNo, featureScore, featureStep)
 
 
 def DataSplit(feature, labels):
     # first, reduce the number of features we are using
-    newFeature, featNo, newFeatNo = FeatureSelection(feature, labels)
+    print 'Starting feature selection '
+    (newFeature,
+     featNo,
+     newFeatNo,
+     featureScore,
+     featureStep) = FeatureSelection(feature, labels)
+    print 'Feature selection is done'
     # first split the data into train and test
     index, mirrorIndex = KFold(newFeature.shape[0], 2)
     trainData = newFeature[index[0]]
@@ -70,7 +118,7 @@ def ParamEst(trainData, trainLabel, numberCores):
     # provide the parameters for the first, coarse pass
     parameters = {'C': np.arange(1, 1000, 2).tolist()}
     # print 'Parameters', parameters['C']
-    gridModel = svm.SVR()
+    gridModel = svm.SVR(kernel='linear')
 
     print 'First pass parameter estimation! '
     firstTrainModel = grid_search.GridSearchCV(gridModel,
@@ -118,7 +166,7 @@ def ParamEst(trainData, trainLabel, numberCores):
 
 def TrainModel(trainData, trainLabel, bestC, bestE, savemodel=0):
     # Modelparameters from Estimation
-    trainModel = svm.SVR(C=bestC)
+    trainModel = svm.SVR(kernel='linear', C=bestC)
     trainModel.fit(trainData, trainLabel)
 
     # This is not used by default because I haven't figured out how to save
@@ -136,7 +184,7 @@ def TestModel(trainModel, testData, testLabel, cv=1, bestC=1, bestE=0.1):
 
     if cv == 1:
         # do crossvalidation
-        testmodel = svm.SVR(C=bestC)
+        testmodel = svm.SVR(kernel='linear', C=bestC)
 
         # split the dataset for crossvalidation
         loo = LeaveOneOut(len(testLabel))
