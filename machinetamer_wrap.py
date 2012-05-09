@@ -32,7 +32,7 @@ import sys
 import time
 import numpy as np
 from sklearn import svm, grid_search
-from sklearn.metrics import mean_square_error
+from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
 from sklearn.feature_selection import RFE, RFECV
@@ -54,34 +54,34 @@ def FeatureSelection(feature, labels):
     if featNo > 1000:
         rfeObject = RFE(estimator=svrEstimator,
                         n_features_to_select=1000,
-                        step=2)
+                        step=0.01)
 
         rfeObject.fit(feature, labels)
         reducedFeatureIndex = rfeObject.support_
-        reducedFeatures = feature[reducedFeatureIndex]
+        reducedFeatures = feature[..., reducedFeatureIndex]
 
         rfecvObject = RFECV(estimator=svrEstimator,
                             step=1,
                             cv=5,
-                            loss_func=mean_square_error)
+                            loss_func=mean_squared_error)
 
         rfecvObject.fit(reducedFeatures, labels)
-        featureIndex = rfecvObject.support_
+        newfeatureIndex = rfecvObject.support_
         featureScore = rfecvObject.cv_scores_
         featureStep = rfecvObject.step
-        newFeature = reducedFeatures[featureIndex]
+        newFeature = reducedFeatures[..., newfeatureIndex]
 
     else:
         rfecvObject = RFECV(estimator=svrEstimator,
                             step=1,
                             cv=5,
-                            loss_func=mean_square_error)
+                            loss_func=mean_squared_error)
 
         rfecvObject.fit(feature, labels)
         featureIndex = rfecvObject.support_
         featureScore = rfecvObject.cv_scores_
         featureStep = rfecvObject.step
-        newFeature = feature[featureIndex]
+        newFeature = feature[..., featureIndex]
 
     newFeatNo = newFeature.shape[1]
 
