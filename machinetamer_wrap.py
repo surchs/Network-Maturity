@@ -66,10 +66,10 @@ def FeatureSelection(feature, labels):
                             loss_func=mean_squared_error)
 
         rfecvObject.fit(reducedFeatures, labels)
-        newfeatureIndex = rfecvObject.support_
+        featureIndex = rfecvObject.support_
         featureScore = rfecvObject.cv_scores_
         featureStep = rfecvObject.step
-        newFeature = reducedFeatures[..., newfeatureIndex]
+        newFeature = reducedFeatures[..., featureIndex]
 
     else:
         rfecvObject = RFECV(estimator=svrEstimator,
@@ -85,24 +85,32 @@ def FeatureSelection(feature, labels):
 
     newFeatNo = newFeature.shape[1]
 
-    return (newFeature, featNo, newFeatNo, featureScore, featureStep)
+    return (newFeature,
+            featNo,
+            newFeatNo,
+            featureScore,
+            featureStep,
+            featureIndex)
 
 
 def DataSplit(feature, labels):
-    # first, reduce the number of features we are using
+    # first split the data into train and test
+    index, mirrorIndex = KFold(feature.shape[0], 2, shuffle=True)
+    trainData = feature[index[0]]
+    testData = feature[index[1]]
+    trainLabel = labels[index[0]]
+    testLabel = labels[index[1]]
+    # then, reduce the number of features we are using
     print 'Starting feature selection '
     (newFeature,
      featNo,
      newFeatNo,
      featureScore,
-     featureStep) = FeatureSelection(feature, labels)
+     featureStep,
+     featureIndex) = FeatureSelection(trainData, trainLabel)
     print 'Feature selection is done'
-    # first split the data into train and test
-    index, mirrorIndex = KFold(newFeature.shape[0], 2)
-    trainData = newFeature[index[0]]
-    testData = newFeature[index[1]]
-    trainLabel = labels[index[0]]
-    testLabel = labels[index[1]]
+    trainData = trainData[..., featureIndex]
+    testData = testData[..., featureIndex]
 
     return (trainData, trainLabel, testData, testLabel, featNo, newFeatNo)
 
