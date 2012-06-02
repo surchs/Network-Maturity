@@ -35,7 +35,7 @@ for infile in glob.glob(os.path.join(dataPath, '*/', fileName)):
             store = store + tempbin[..., dim]
 
         teststore = store
-        teststore[teststore != 0] = 1
+        teststore[teststore != maskValue] = 1
 
         if ran == 0:
             storage = teststore

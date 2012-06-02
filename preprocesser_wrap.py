@@ -111,9 +111,12 @@ def Masker(inData, maskData, maskNo):
     return ((maskedOut, cropMask))
 
 
-def MaskCleaner(maskData, funcData):
+def MaskCleaner(maskData, funcData, funcMaskData, useFuncMask):
     # Clean up a mask so it contains only nonzero functional voxels
-    maskData[funcData[..., 0] == 0] = 0
+    if useFuncMask == 1:
+        maskData = maskData * funcMaskData
+    else:
+        maskData[funcData[..., 0] == 0] = 0
 
     return maskData
 
@@ -177,13 +180,15 @@ def SubjectProcesser(arguments):
      funcRelPath,
      funcName,
      maskData,
+     funcMaskData,
+     useFuncMask,
      nodeMode) = arguments
     # load the functional file
     (funcSet, funcData) = Loader(os.path.join(funcAbsPath, sub),
                                  source=funcName)
 
     # get rid of maskvalues that are non brain voxels
-    maskData = MaskCleaner(maskData, funcData)
+    maskData = MaskCleaner(maskData, funcData, funcMaskData, useFuncMask)
 
     feature = np.array([], dtype='float32')
     stackArray = np.array([], dtype='float32')
@@ -242,7 +247,9 @@ def MaskWrapper(maskArguments, maskNo=0):
      funcName,
      funcRelPath,
      maskData,
+     funcMaskData,
      numberCores,
+     useFuncMask,
      nodeMode) = maskArguments
 
     # check if mask is 3D or 4D
@@ -277,6 +284,8 @@ def MaskWrapper(maskArguments, maskNo=0):
                         funcRelPath,
                         funcName,
                         localMask_,
+                        funcMaskData,
+                        useFuncMask,
                         nodeMode)
         argList.append(subArguments)
 
@@ -315,6 +324,7 @@ def MaskWrapper(maskArguments, maskNo=0):
 
 def Main(mPath,
          mSource,
+         funcMask,
          funcAbsPath,
          funcRelPath,
          funcName,
@@ -322,6 +332,7 @@ def Main(mPath,
          outPath,
          conditionName,
          numberCores=8,
+         useFuncMask=0,
          nodeMode=1,
          callCommand='called from wrapper',
          saveFiles=True):
@@ -344,6 +355,7 @@ def Main(mPath,
     # now subList and ageList contain information on the subjects
 
     (mRaw, maskData) = Loader(mPath, source=mSource)
+    (fmRaw, funcMaskData) = Loader(mPath, source=funcMask)
 
     # regardless of iteration of loop, all processes get the
     # same base arguments
@@ -353,7 +365,9 @@ def Main(mPath,
                      funcName,
                      funcRelPath,
                      maskData,
+                     funcMaskData,
                      numberCores,
+                     useFuncMask,
                      nodeMode)
 
     # insert a switch for maskfiles with more than one mask in them
