@@ -425,9 +425,12 @@ class Study(object):
                 for subjectName in preproc.subjects.keys():
                     tempSubject = preproc.subjects[subjectName]
                     tempAge = tempSubject.age
-                    # feature assignment still hardcoded
+                    # feature assignment still hardcoded - meaning that there
+                    # is currently no way to choose what kind of connectivity
+                    # will be used in the analysis (whole, between, within)
                     tempNetwork = tempSubject.networks[networkName]
-                    tempFeature = tempNetwork.features['whole']
+                    # at this point, we can choose the hardcoded connectivity
+                    tempFeature = tempNetwork.features['within']
                     subject = Storage(subjectName)
                     subject.putSubject(tempAge, tempFeature)
                     tempDict[subjectName] = subject
@@ -962,7 +965,7 @@ class Subject(object):
         for network in networkList:
             # load the Network Storage object and keep it as a temp file
             tempNet = self.networks[network]
-            # prepare the Storage for the different keys
+            # prepare the Storage for the different keys that get appended to
             tempNet.features['whole'] = np.array([])
             tempNet.features['order whole'] = []
             tempNet.features['between'] = np.array([])
