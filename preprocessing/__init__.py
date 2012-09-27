@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 12 14:26:18 2012
 
 @author: sebastian
 
-initializer
+init module for the processing package
+
 """
 
-from .base import *
+from .base import (Parameters, Storage, Study,
+                         Preproc, Subject, Network, Fold)
+# so far this is all there is to do
