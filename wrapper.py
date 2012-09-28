@@ -38,7 +38,7 @@ def Main(configFile, studyName, outPath, numberCores):
     # this function is used to get the files and then continue and call all the
     # necessary methods inside the Study class
 
-    studyParameter = ps.Parameters('Network Maturity')
+    studyParameter = ps.Parameters(studyName)
 
     studyParameter.makeStudy(configFile, outPath, numberCores)
     # this has taken care of the parameter stuff. Now we have to get the Study
@@ -105,7 +105,10 @@ def Main(configFile, studyName, outPath, numberCores):
 
     # so far this should be all, now we just have to save the Study object
 
-    output = gzip.open(studyName, 'wb')
+    output = gzip.open(os.path.join(outPath, ('study_'
+                                              + studyName
+                                              + '_final.gz'),
+                                    'wb'))
     cPickle.dump(Study, output, protocol=2)
     print 'Done saving the study!'
     print 'Have a nice day'

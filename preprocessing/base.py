@@ -478,7 +478,7 @@ class Study(object):
         # method to save the current instance of the Study object as a safety
         # measure
         saveFile = gzip.open(os.path.join(self.outPath,
-                                          (self.name + '_save.svf')), 'wb')
+                                          (self.name + '_save.gz')), 'wb')
         cPickle.dump(self, saveFile, protocol=2)
 
 
