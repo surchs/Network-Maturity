@@ -38,12 +38,12 @@ def Main(configFile, studyName, outPath, numberCores):
     # this function is used to get the files and then continue and call all the
     # necessary methods inside the Study class
 
-    studyParameter = ps.parameters('Network Maturity')
+    studyParameter = ps.Parameters('Network Maturity')
 
     studyParameter.makeStudy(configFile, outPath, numberCores)
     # this has taken care of the parameter stuff. Now we have to get the Study
 
-    Study = ps.study(studyParameter)
+    Study = ps.Study(studyParameter)
     # From now on we just have to call the methods of the Study
     #
     # load the Parameters of that are given in the config file
@@ -89,11 +89,14 @@ def Main(configFile, studyName, outPath, numberCores):
         print 'Done mapping back the results'
         # store and get rid of the analysis
         Study.saveThis('Preprocessing', analysis)
+        # save the study object in case something breaks so at least we
+        # can get the previously processed files back
+        print 'Saving temp copy of study'
+        Study.saveYourself()
+        print 'Done saving temp copy of study'
 
     print 'Wrapper: initializing the analyses'
     Study.initializeAnalysis()
-    # don't need this, more efficient cleanup in place
-    #Study.cleanup(1)
 
     Study.runAnalysis()
     # and lastly we ask the study to clean up as we don't want the file to get

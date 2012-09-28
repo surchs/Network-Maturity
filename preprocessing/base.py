@@ -10,11 +10,11 @@ classes for performing the Network based maturity Preproc
 ### Imports ###
 import os
 import re
-import sys
+# import sys
 import time
 import gzip
 import cPickle
-import thread
+# import thread
 import shutil
 import numpy as np
 import nibabel as nib
@@ -211,7 +211,7 @@ class Study(object):
                 maskName = commandString[1]
                 funcMaskName = commandString[2]
                 funcDir = commandString[3]
-                funcRelPath = commandString[4]
+                # funcRelPath = commandString[4]
                 funcName = commandString[5]
                 subjectList = commandString[6]
                 outputPath = commandString[7]
@@ -473,6 +473,13 @@ class Study(object):
             for analysisName in self.analyses.keys():
                 print 'cleaning', analysisName
                 self.analyses[analysisName].cleanup()
+
+    def saveYourself(self):
+        # method to save the current instance of the Study object as a safety
+        # measure
+        saveFile = gzip.open(os.path.join(self.outPath,
+                                          (self.name + '_save.svf')), 'wb')
+        cPickle.dump(self, saveFile, protocol=2)
 
 
 class Preproc(object):
@@ -1147,6 +1154,9 @@ class Network(object):
             self.folds[foldName] = fold
             run += 1
 
+        # print that this has finished
+        print 'Making folds completed'
+
     def runFolds(self):
         # method to actually run the folds
         for foldName in sorted(self.folds.iterkeys()):
@@ -1161,7 +1171,9 @@ class Network(object):
             else:
                 fold.C = self.C
                 fold.E = self.E
+            print 'Training model'
             fold.trainModel()
+            print 'Testing model'
             fold.testModel()
             # getting the predicted data together again
             print '#### Done running', foldName, self.name, '####\n'
