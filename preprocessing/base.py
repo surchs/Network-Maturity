@@ -1244,7 +1244,7 @@ class Fold(object):
         featureNumber = self.trainFeatures.shape[1]
 
         if self.fs == 0 or self.kernel != 'linear':
-            if self.kernel != 'linear' and self.fs == 0:
+            if self.kernel != 'linear' and self.fs == 1:
                 # hit a warning because we can't do this
                 print '\n\n##### WARNING #####'
                 print 'dude, your feature selection settings don\'t go well '
@@ -1253,8 +1253,16 @@ class Fold(object):
                 print 'won\'t work! seriously! Reconsider'
                 print '##### WARNING #####'
                 time.sleep(3)
-            # fuck common sense, we do it the Dosenbach way!
-            #
+
+            else:
+                # apparently we really intended to do this
+                print '\n\n##### Note #####'
+                print 'dude, you really want to go there... '
+                print 'You can run this correlation based feature selection '
+                print 'but what would Jesus do?'
+                print 'It\'s not a nice way of doing things. Have a nice day! '
+                print '##### Note #####'
+
             # we have to loop over the entire feature vector
             # first we need a storage variable
             storage = np.array([])
