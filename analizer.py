@@ -118,6 +118,10 @@ def Main(loadFile):
     cols = 2.0
     rows = np.ceil(numberNetworks / cols)
 
+    # figure for text displays
+    fig0 = plt.figure(0, figsize=(8.5, 11), dpi=150)
+    fig0.suptitle(aName)
+
     fig1 = plt.figure(1)
     fig1.suptitle('boxplots of error variance')
     # fig1.tight_layout()
@@ -139,13 +143,65 @@ def Main(loadFile):
 
     loc = 1
 
+    '''
+    Let's take on the text processing
+    While looping through the networks I will populate the strings I need
+    for information purposes. I am going to display:
+    Only once
+        1) The name of the study
+        2) The kernel
+        3) The feature selection technique
+        4) The kind of connectivity trained on
+        5) The number of crossvalidations (folds)
+        6) Results of the ANOVA (F statistic and p value)
+        7) The number of subjects
+        8) The age distribution of the subjects
+
+    For each network
+        1) MAE
+        3) Number of nodes in the network (not yet possible)
+        4) Number of features used for training / Full number of features
+        (also not yet possible)
+        5) correlation of true and predicted age (+R^2)
+        6) parameters used for running
+
+    So let's prepare these text variables before the loop
+    '''
+    txtMae = ''
+    #txtRmse = ''
+    #txtNodes = ''
+    #txtFeat = ''
+    txtCorr = ''
+    txtParm = ''
+
     errorVarList = []
     errorNameList = []
+    numberFolds = None
+    numberSubs = None
+    trueAge = None
     # now loop over the networks and get the data
     for networkName in networkNames:
-        # we'll start with a simple figure for all the networks
+        # first get the values from the dict
         tD = valueDict[networkName]
 
+        # then start with the texts
+        txtMae = (txtMae + 'MAE of ' + networkName
+                  + ' = ' + str(np.round(tD['mae'], 3)) + '\n')
+        #txtRmse = (txtRmse + 'RMSE of ' + networkName
+        #           + ' = ' + str(tD['rmse']) + '\n')
+        # read out temporary network file
+        tempNet = networks[networkName]
+        tpCorr = st.pearsonr(tempNet.trueData,
+                             tempNet.predictedData)[0]
+        txtCorr = (txtCorr + 'Pearson\'s r for ' + networkName
+                   + ' = ' + str(np.round(tpCorr, 3)) + '\n')
+        txtParm = (txtParm + 'Parameters for ' + networkName
+                   + ': C = ' + str(np.round(tempNet.C, 3)) + ' E = '
+                   + str(np.round(tempNet.E, 3)) + '\n')
+
+        numberFolds = tempNet.numberFolds
+        numberSubs = len(tempNet.subNames)
+        trueAge = tempNet.trueData
         # for the boxplots, we have to append the data to a list
         errorVarList.append(tD['error'])
         errorNameList.append(networkName)
@@ -161,6 +217,33 @@ def Main(loadFile):
         tSP4.plot(tD['true'], tD['pred'], 'co')
         # add 1 to the localization variable
         loc += 1
+
+    # now create the text for the whole study
+    txtName = ('The name of the current analysis is ' + aName)
+    txtKernel = ('Here, a ' + analysis.kernel + ' kernel was used')
+    txtFeat = ('The feature selection was ' + str(analysis.fs))
+    # txtConn = ('The connectivity trained on was ' + analysis.connType)
+    txtFolds = (str(numberFolds) + ' folds were run while estimating age')
+    txtAnova = ('ANOVA of Network effect on prediction error returned:\nF = '
+                + str(np.round(anova[0], 3)) + ' p = '
+                + str(np.round(anova[1], 3)))
+    txtSubs = ('There were ' + str(numberSubs) + ' subjects in this analysis')
+    txtAge = ('Their ages ranged from ' + str(np.round(trueAge.min(), 2))
+              + ' to ' + str(np.round(trueAge.max(), 2))
+              + ' years of age (SD = '
+              + str(np.round(np.std(trueAge), 2)) + ')')
+
+    statString = (txtName + '\n' + txtKernel + '\n' + txtFeat  # + '\n' + txtConn
+                  + '\n' + txtFolds + '\n' + txtAnova + '\n' + txtSubs + '\n'
+                  + txtAge)
+    # + txtRmse + '\n\n'
+    dynString = (txtMae + '\n\n' + txtCorr + '\n\n'
+                 + txtParm)
+
+    fullString = (statString + '\n\n\n' + dynString)
+
+    # let's build the text
+    fig0.text(0.1, 0.2, fullString)
 
     # now we can build figure 1
     tSP1 = fig1.add_subplot(111)
@@ -186,6 +269,7 @@ def Main(loadFile):
 
     # now save all that to a pdf
     pp = pdf((aName + '_results.pdf'))
+    pp.savefig(fig0)
     pp.savefig(fig1)
     pp.savefig(fig2)
     pp.savefig(fig3)
