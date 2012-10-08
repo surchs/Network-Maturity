@@ -81,7 +81,7 @@ class Parameters(object):
                     subjectList,
                     outputPath,
                     useFuncMask,
-                    nodeMode,
+                    connType,
                     cv,
                     fs,
                     kernel,
@@ -100,7 +100,7 @@ class Parameters(object):
         self.subjectList = subjectList
         self.outputPath = outputPath
         self.useFuncMask = useFuncMask
-        self.nodeMode = nodeMode
+        self.connType = connType
         self.cv = cv
         self.fs = fs
         self.kernel = kernel
@@ -116,14 +116,14 @@ class Parameters(object):
                     networks,
                     useFuncMask,
                     funcMaskData,
-                    nodeMode):
+                    connType):
         # method to generate Subject Parameters
         self.subjectPath = subjectPath
         self.age = age
         self.networks = networks
         self.useFuncMask = useFuncMask
         self.funcMaskData = funcMaskData
-        self.nodeMode = nodeMode
+        self.connType = connType
 
     def makeNetwork(self):
         pass
@@ -185,6 +185,9 @@ class Study(object):
         self.analysisParameters = {}
         self.analyses = {}
         self.analysesPaths = {}
+        # and lastly we need to know what connectivity we are basing our
+        # analysis on. One of 'whole', 'between', 'within'
+        self.connType = None
 
     def getParameters(self):
         # method to read in the config file and put values in attributes
@@ -219,7 +222,7 @@ class Study(object):
                 cv = int(commandString[9])
                 fs = int(commandString[10])
                 kernel = commandString[11]
-                nodeMode = int(commandString[12])
+                connType = commandString[12]
                 estParameters = int(commandString[13])
                 givenC = float(commandString[14])
                 givenE = float(commandString[15])
@@ -237,7 +240,7 @@ class Study(object):
                                      subjectList=subjectList,
                                      outputPath=outputPath,
                                      useFuncMask=useFuncMask,
-                                     nodeMode=nodeMode,
+                                     connType=connType,
                                      cv=cv,
                                      fs=fs,
                                      kernel=kernel,
@@ -248,6 +251,9 @@ class Study(object):
                                      numberCores=self.numberCores)
                 # store the complete parameter object in the dictionary
                 self.preprocParameters[conditionName] = tempObj
+                # also store the self.connType because its needed here in the
+                # study object later (when loading the analysis)
+                self.connType = connType
 
     def makePreproc(self):
         # method to loop over the dictionary with parameter objects and
@@ -406,7 +412,7 @@ class Study(object):
 
             # initialize Analysis object
             tempAnalysis = Analysis(preprocName)
-            tempAnalysis.nodeMode = preproc.nodeMode
+            tempAnalysis.connType = preproc.connType
             tempAnalysis.cv = preproc.cv
             tempAnalysis.fs = preproc.fs
             tempAnalysis.estParameters = preproc.estParameters
@@ -430,7 +436,7 @@ class Study(object):
                     # will be used in the analysis (whole, between, within)
                     tempNetwork = tempSubject.networks[networkName]
                     # at this point, we can choose the hardcoded connectivity
-                    tempFeature = tempNetwork.features['within']
+                    tempFeature = tempNetwork.features[self.connType]
                     subject = Storage(subjectName)
                     subject.putSubject(tempAge, tempFeature)
                     tempDict[subjectName] = subject
@@ -497,7 +503,7 @@ class Preproc(object):
         self.subjectList = Parameters.subjectList
         self.outputPath = Parameters.outputPath
         self.useFuncMask = Parameters.useFuncMask
-        self.nodeMode = Parameters.nodeMode
+        self.connType = Parameters.connType
         self.cv = Parameters.cv
         self.fs = Parameters.fs
         self.kernel = Parameters.kernel
@@ -644,7 +650,7 @@ class Preproc(object):
                                   networks=self.networks,
                                   useFuncMask=self.useFuncMask,
                                   funcMaskData=self.funcMaskData,
-                                  nodeMode=self.nodeMode)
+                                  connType=self.connType)
 
             # store them in the parameter dictionary
             self.subjectParameters[subject] = tempParam
@@ -758,7 +764,7 @@ class Preproc(object):
         self.subjectList = None
         self.outputPath = None
         self.useFuncMask = None
-        self.nodeMode = None
+        self.connType = None
         self.estParameters = None
         self.givenC = None
         self.givenE = None
@@ -785,7 +791,7 @@ class Subject(object):
         self.networksMasks = Parameters.networks
         self.useFuncMask = Parameters.useFuncMask
         self.funcMaskData = Parameters.funcMaskData
-        self.nodeMode = Parameters.nodeMode
+        self.connType = Parameters.connType
 
         # prepare the networks dictionary
         self.networks = {}
@@ -1017,7 +1023,7 @@ class Analysis(object):
         self.path = None
 
         # and some running parameters initialized
-        self.nodeMode = None
+        self.connType = None
         self.cv = None
         self.fs = None
         self.estParameters = None
@@ -1250,7 +1256,7 @@ class Fold(object):
                 print 'dude, your feature selection settings don\'t go well '
                 print 'with your selected kernel'
                 print 'You want to run RFE but chose a non-linear kernel.'
-                print 'won\'t work! seriously! Reconsider'
+                print 'won\'t work! seriously! Reconsider\n\n'
                 print '##### WARNING #####'
                 time.sleep(3)
 
@@ -1261,7 +1267,7 @@ class Fold(object):
                 print 'You can run this correlation based feature selection '
                 print 'but what would Jesus do?'
                 print 'It\'s not a nice way of doing things. Have a nice day! '
-                print '##### Note #####'
+                print '##### Note #####\n\n'
 
             # we have to loop over the entire feature vector
             # first we need a storage variable
