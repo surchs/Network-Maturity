@@ -27,6 +27,7 @@ def Main(loadFile):
     valueDict = {}
     shappStore = np.array([])
     errList = []
+    maeList = []
     normCount = 0
     networks = analysis.networks
     networkNames = networks.keys()
@@ -42,6 +43,9 @@ def Main(loadFile):
         # append error to errorlist for ANOVA
         errList.append(tempErr)
         tempAbs = np.absolute(tempErr)
+        tempMae = np.mean(tempAbs)
+        # append mae to maelist for display
+        maeList.append(tempMae)
         tempStd = np.std(tempErr)
         # get the p value of the shapiro-wilk test
         tempShapp = st.shapiro(tempErr)[1]
@@ -55,6 +59,7 @@ def Main(loadFile):
         tempDict['abs'] = tempAbs
         tempDict['std'] = tempStd
         tempDict['shapp'] = tempShapp
+        tempDict['mae'] = tempMae
         # put the dictionary in the valueDict
         valueDict[networkName] = tempDict
 
@@ -129,6 +134,9 @@ def Main(loadFile):
     fig4.suptitle('predicted over true age')
     # fig4.tight_layout()
 
+    fig5 = plt.figure(5)
+    fig5.suptitle('mean absolute error of the networks')
+
     loc = 1
 
     errorVarList = []
@@ -159,11 +167,22 @@ def Main(loadFile):
     tSP1.boxplot(errorVarList)
     plt.setp(tSP1, xticklabels=errorNameList)
 
+    # and now we build figure 5
+    tSP5 = fig5.add_subplot(111)
+    indMae = range(len(maeList))
+    tSP5.bar(indMae, maeList, facecolor='#99CCFF', align='center')
+    tSP5.set_ylabel('MAE for network')
+    tSP5.set_xticks(indMae)
+    # set x-labels to the network names
+    tSP5.set_xticklabels(networkNames)
+    fig5.autofmt_xdate()
+
     # adjust the images
     fig1.subplots_adjust(hspace=0.5, wspace=0.5)
     fig2.subplots_adjust(hspace=0.5, wspace=0.5)
     fig3.subplots_adjust(hspace=0.5, wspace=0.5)
     fig4.subplots_adjust(hspace=0.5, wspace=0.5)
+    fig5.subplots_adjust(hspace=0.5, wspace=0.5)
 
     # now save all that to a pdf
     pp = pdf((aName + '_results.pdf'))
@@ -171,6 +190,7 @@ def Main(loadFile):
     pp.savefig(fig2)
     pp.savefig(fig3)
     pp.savefig(fig4)
+    pp.savefig(fig5)
     pp.close()
 
     print '\nDone saving. Have a nice day.'
