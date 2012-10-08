@@ -185,9 +185,6 @@ class Study(object):
         self.analysisParameters = {}
         self.analyses = {}
         self.analysesPaths = {}
-        # and lastly we need to know what connectivity we are basing our
-        # analysis on. One of 'whole', 'between', 'within'
-        self.connType = None
 
     def getParameters(self):
         # method to read in the config file and put values in attributes
@@ -251,9 +248,6 @@ class Study(object):
                                      numberCores=self.numberCores)
                 # store the complete parameter object in the dictionary
                 self.preprocParameters[conditionName] = tempObj
-                # also store the self.connType because its needed here in the
-                # study object later (when loading the analysis)
-                self.connType = connType
 
     def makePreproc(self):
         # method to loop over the dictionary with parameter objects and
@@ -436,7 +430,7 @@ class Study(object):
                     # will be used in the analysis (whole, between, within)
                     tempNetwork = tempSubject.networks[networkName]
                     # at this point, we can choose the hardcoded connectivity
-                    tempFeature = tempNetwork.features[self.connType]
+                    tempFeature = tempNetwork.features[preproc.connType]
                     subject = Storage(subjectName)
                     subject.putSubject(tempAge, tempFeature)
                     tempDict[subjectName] = subject

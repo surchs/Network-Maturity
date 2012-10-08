@@ -107,8 +107,7 @@ def Main(configFile, studyName, outPath, numberCores):
 
     output = gzip.open(os.path.join(outPath, ('study_'
                                               + studyName
-                                              + '_final.gz'),
-                                    'wb'))
+                                              + '_final.gz')), 'wb')
     cPickle.dump(Study, output, protocol=2)
     print 'Done saving the study!'
     print 'Have a nice day'
